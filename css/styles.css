@@ -1,0 +1,13 @@
+/* CSS Document */
+
+body {
+	padding-top: 50px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+video {
+	width: 100%;
+}
+/*  Mediaelement custom styling*/
