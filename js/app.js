@@ -16,15 +16,31 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 		// variables, set to defaults
 	let isFullScreen = false;
-//	let ccMode = 1;				// default showing only one line at a time
+	//	let ccMode = 1;				// default showing only one line at a time
 	
-	// functions
-	function createControlsLI(text) {
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// functions 
+	////////////////////////////////////////////////////////////////////////////////
+	
+	function createControlsLI(text, type = "link") {
 		const li = document.createElement('li');
-		const a = document.createElement('a');
-		a.textContent = text;
 		li.className = "mevp_" + text;
-		li.appendChild(a);
+
+		if (type === "link") {
+			const a = document.createElement('a');
+			a.textContent = text;	
+			li.appendChild(a);
+		} else if (type === "time") {
+			const p = document.createElement('p');
+			p.textContent = "0:00";		
+			li.appendChild(p);
+		} else if (type === "progress") {
+			const div = document.createElement('div');
+			div.className = "mevp_" + text + "--bar";
+			li.appendChild(div);
+ 		}
+
 		return li;
 	}
 	
@@ -37,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		return computeHeight;
 	}
 	
+	function placeNav() {
+		navUL.style.top = placeAtBottom(player, navUL);
+	}
 	
 	// Get top, botom, left or right position of an element
 	function getPosition(element, position) {
@@ -73,10 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	// handle full screen mode	
 	function toggleFullScreen() {
+
 		if (!document.fullscreenElement && !document.mozFullScreenElement &&
     	  !document.webkitFullscreenElement && !document.msFullscreenElement) {
 			fullProperties(player);
 			fullProperties(navUL);
+			const fullButton = document.querySelector(".mevp_fullscreen");
+			fullButton.className = "mevp_normalscreen";
 			if (skin.requestFullscreen) {
 				skin.requestFullscreen();
 			} else if (skin.webkitRequestFullscreen) {
@@ -97,62 +119,143 @@ document.addEventListener('DOMContentLoaded', () => {
 			} else if (document.webkitExitFullscreen) {
 			  document.webkitExitFullscreen();
 			}
+					}
+	}
+	
+	function setTime(time) {
+		player.currentTime = time;
+		if (document.querySelector(".mevp_play")) {
+			togglePause();
+		}
+
+	}
+	
+	function getProgress(e) {
+		const progress = document.querySelector(".mevp_progress");
+		const x = getPosition(progress, "left");
+		const totalWidth = getPosition(progress, "right") - x;
+		const clickWidth = e.clientX - x;
+		setTime((clickWidth / totalWidth) * player.duration);
+	
+	}
+	
+	function updateDuration() {
+		updateTime(".mevp_total", player.duration);
+	}
+	
+	function updateCurrent() {
+		updateTime(".mevp_current", player.currentTime);
+		updateDuration();
+		updateProgress();
+	}
+	
+	function updateTime(elementName, getTime) {
+		const timer = document.querySelector(elementName);
+		const time = timer.firstElementChild;
+		time.textContent = timeToString(getTime);
+	}
+	
+	function timeToString(time) {
+		const min = parseInt(time / 60);
+		const sec = parseInt(time % 60);
+		if (sec < 10) {
+			return min + ":0" + sec;
+		} else {
+			return min + ":" + sec;	
 		}
 	}
 	
-	// wrap video element in custom container
-	skin.className	= "mevp_skin";
-	container.insertBefore(skin, player);
-	container.removeChild(player);
-	skin.appendChild(player);
+	function updateProgress() {
+		const bar = document.querySelector(".mevp_progress--bar");
+		const width = ((player.currentTime / player.duration) * 100) + "%";
+		bar.style.width = width;
+	}
 	
-	// add custom controls to container
-	if (player.getAttribute("controls")) {
+	// Initial setup and loading of player
+	function loadPlayer() {
+		// wrap video element in custom container
+		skin.className	= "mevp_skin";
+		container.insertBefore(skin, player);
+		container.removeChild(player);
+		skin.appendChild(player);
+
+		// add custom controls to container
 		player.removeAttribute("controls");
 		navUL.appendChild(createControlsLI("play"));
+		navUL.appendChild(createControlsLI("current", "time"));
+		navUL.appendChild(createControlsLI("progress", "progress"));		
+		navUL.appendChild(createControlsLI("total", "time"));
 		navUL.appendChild(createControlsLI("fullscreen"));
 		navUL.className = "mevp_nav";
 		skin.appendChild(navUL);
 		navUL.style.top = placeAtBottom(player, navUL);
-
 	}
-
+	
 	// implement closed captioning
 
 
 
 	// allow users to change control colors
 	
-// event handlers
+	////////////////////////////////////////////////////////////////////////////////
+	// event handlers
+	////////////////////////////////////////////////////////////////////////////////
+	
 	skin.addEventListener('click', (e) => {
 		const controlClicked = e.target;
-		if (controlClicked.className	=== 'mevp_fullscreen') {
-			toggleFullScreen();
+		if (controlClicked.className	=== 'mevp_fullscreen' || 
+			controlClicked.className	=== 'mevp_normalscreen') {
+			
+			toggleFullScreen();	
+		} else if (controlClicked.className === 'mevp_progress' ||
+				  controlClicked.className === 'mevp_progress--bar') {
+			
+			getProgress(e);
 		} else if (controlClicked.className	!== 'mevp_nav') {
 			togglePause();
 		}	
+	});
 	
+	// keep users from right clicking and showing browser controls
+	skin.addEventListener('contextmenu', (e) => {
+		if (e.target.className	=== 'custom_player') {
+			e.preventDefault();
+		}
+	});
+	
+	player.addEventListener("timeupdate", () => {
+		updateCurrent();
 	});
 	
 	player.addEventListener("resize", () => {
-		navUL.style.top = placeAtBottom(player, navUL);
+		placeNav();
+		updateDuration();
 	});
 	
 	window.addEventListener("resize", () => {
-		navUL.style.top = placeAtBottom(player, navUL);
+		placeNav();
 	});
 	
 	document.addEventListener("webkitfullscreenchange", () => {
 		if (isFullScreen === false) {
 			isFullScreen = true;
 		} else {
+			const fullButton = document.querySelector(".mevp_normalscreen");
+			fullButton.className = "mevp_fullscreen";
 			normalProperties(player);
 			normalProperties(navUL);
 			isFullScreen = false;
 		}
 	});
-
+	
+	//////////////////////////////////////////////////////////////////////
+	// Main
+	//////////////////////////////////////////////////////////////////////
+	
+	loadPlayer();
 	
 });
+
+
 
 

@@ -6,12 +6,6 @@
 	max-width: 1100px;
 }
 
-
-/*
-#exampleImage:-moz-full-screen { cursor:zoom-out; }
-#exampleImage:-ms-fullscreen { cursor:zoom-out; }
-#exampleImage:fullscreen { cursor:zoom-out; }
-*/
 .custom_player {
 	position: absolute;
 	display: block;
@@ -28,7 +22,7 @@
 	z-index: 20000;
 	padding: 10px;
 	max-width: 1100px;
-	box-shadow: 0 0 44px 5px rgba(180, 180, 180, .75) inset;
+	box-shadow: 0 0 44px 5px rgba(180, 180, 180, .25) inset;
 
 }
 .mevp_nav li {
@@ -36,16 +30,9 @@
 	list-style: none;	
 	height: 25px;
 	width: 25px;
-}
-
-.mevp_pause {
-	background: url(../images/pause.svg) center no-repeat;
-}
-.mevp_play {
-	background: url(../images/play.svg) center no-repeat;
-}
-.mevp_fullscreen {
-	background: url(../images/fullscreen.svg) center no-repeat;
+	margin-left:  5px;
+	margin-right: 5px;
+	text-align: center;
 }
 
 .mevp_nav a {
@@ -58,6 +45,43 @@
 	position: absolute;
 	width: 1px;
 }
+
+.mevp_pause {
+	background: url(../images/pause.svg) center no-repeat;
+}
+.mevp_play {
+	background: url(../images/play.svg) center no-repeat;
+}
+
+.mevp_progress {
+	width: 100%;
+	background-color:rgba(255,255,255, 0.3);
+	flex-grow: 1;
+	border: 1px solid rgba(55,55,55, 0.3);
+}
+
+.mevp_progress--bar {
+	height: 100%;
+	width: 0%;
+	background-color:rgba(255,255,255, 0.9);
+}
+
+.mevp_fullscreen {
+	background: url(../images/fullscreen.svg) center no-repeat;
+}
+.mevp_normalscreen {
+	background: url(../images/normalscreen.svg) center no-repeat;
+}
+
+
+.mevp_nav p {
+	display: inline-block;
+	color: #fff;
+	margin: 0;
+	padding-top: 5px;
+	text-shadow: 1px 1px 3px #000;
+}
+
 .mevp_skin:-webkit-full-screen, 
 .custom_player:-webkit-full-screen,
 .mevp_nav:-webkit-full-screen { 
@@ -69,13 +93,24 @@
 	height: 100%;
 }
 
+@media (min-width: 480px) {
+	.mevp_nav li {
+		margin-left: 15px;
+		margin-right: 15px;
+	}
+		
+	.mevp_progress,
+	.mevp_progress--bar	{
+		border-radius: 5px;
+	}
+}
+
 @media (min-width: 700px) {
 	.custom_player {
-		box-shadow: 0 0 10px 13px #acb;
+		box-shadow: 0 0 10px 13px #aab;
 		border: 3px solid #333;
 		max-width: 1100px;
 	}
-
 }
 
 
