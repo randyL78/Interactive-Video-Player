@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const player = document.querySelector('.custom_player');
 	const container = player.parentNode;
 	const navUL = document.createElement('ul');
-	
+	const volumeSlider = document.createElement('input');
 		// variables, set to defaults
 	let isFullScreen = false;
 	//	let ccMode = 1;				// default showing only one line at a time
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	// functions 
 	////////////////////////////////////////////////////////////////////////////////
 	
-	function createControlsLI(text, type = "link") {
+	function createControlsLI(text, type) {	
 		const li = document.createElement('li');
 		li.className = "mevp_" + text;
 
@@ -39,7 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			const div = document.createElement('div');
 			div.className = "mevp_" + text + "--bar";
 			li.appendChild(div);
- 		}
+ 		} else if (type === "dropdown") {
+			const ul = document.createElement('p');
+			ul.className = "mevp_" + text + "--drop";
+			li.appendChild(ul);
+		}
 
 		return li;
 	}
@@ -53,17 +57,30 @@ document.addEventListener('DOMContentLoaded', () => {
 		return computeHeight;
 	}
 	
+	function placeAtRight(baseElement, topElement) {
+		const baseWidth = getPosition(baseElement, "right");
+		const topWidth = "30";
+		const parentWidth = getPosition(skin, "left");
+		return (baseWidth - topWidth - parentWidth) + "px";
+	}
+	
 	function placeNav() {
 		navUL.style.top = placeAtBottom(player, navUL);
 	}
 	
+	function placeVolume() {
+		const volumeDiv = volumeSlider.parentElement;
+		const volumeLI = volumeDiv.parentElement;
+		volumeSlider.parentElement.style.left = placeAtRight(volumeLI, volumeDiv);
+	}
+
 	// Get top, botom, left or right position of an element
 	function getPosition(element, position) {
 		return (element.getBoundingClientRect()[position]);
 	}
 	
-	function getHeight(element) {
-		let elemHeight = window.getComputedStyle(element).getPropertyValue("height");
+	function getHeight(element, dimension = "height") {
+		let elemHeight = window.getComputedStyle(element).getPropertyValue(dimension);
 		elemHeight = elemHeight.replace("px", "");
 		return(elemHeight);
 	}
@@ -80,6 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		}
 	}
+	
+	function showVolume() {
+		const volumeDiv = document.querySelector("#volume__content");
+		if (volumeDiv.style.display === "none") {
+			volumeDiv.style.display = "block";
+		} else {
+				volumeDiv.style.display = "none";	
+		}
+	}
+	
+	// set style properties of element when in fullscreen or when going back to normal screen
 	function fullProperties(element) {
 		element.style.maxWidth = "100%";
 		element.style.Width = "100%";
@@ -122,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					}
 	}
 	
+	// set the current time of the video player
 	function setTime(time) {
 		player.currentTime = time;
 		if (document.querySelector(".mevp_play")) {
@@ -130,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	}
 	
+	// find out where user clicked in progress bar and use to set video player time
 	function getProgress(e) {
 		const progress = document.querySelector(".mevp_progress");
 		const x = getPosition(progress, "left");
@@ -171,7 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		bar.style.width = width;
 	}
 	
-	// Initial setup and loading of player
+	///////////////////////////////////////////
+	//	 Initial setup and loading of player
+	//////////////////////////////////////////
+	
 	function loadPlayer() {
 		// wrap video element in custom container
 		skin.className	= "mevp_skin";
@@ -179,18 +212,58 @@ document.addEventListener('DOMContentLoaded', () => {
 		container.removeChild(player);
 		skin.appendChild(player);
 
-		// add custom controls to container
+		// hide browser player controls
 		player.removeAttribute("controls");
-		navUL.appendChild(createControlsLI("play"));
-		navUL.appendChild(createControlsLI("current", "time"));
-		navUL.appendChild(createControlsLI("progress", "progress"));		
-		navUL.appendChild(createControlsLI("total", "time"));
-		navUL.appendChild(createControlsLI("fullscreen"));
+
+		
+		// add custom controls to container
+		const navLI = {
+			play		:	"link",
+			current		:	"time",
+			progress	:	"progress",
+			total		:	"time",
+			volume		:	"dropdown",
+			fullscreen	:	"link"
+		};
+		
+		for (let text in navLI) {
+			navUL.appendChild(createControlsLI(text, navLI[text]));
+		}
 		navUL.className = "mevp_nav";
 		skin.appendChild(navUL);
 		navUL.style.top = placeAtBottom(player, navUL);
+		
+		const volumeUL = document.querySelector('.mevp_volume--drop');
+		volumeUL.appendChild(createVolumeControl());
 	}
 	
+	function createVolumeControl() {
+		const volumeLI = document.querySelector('.mevp_volume');
+		const volumeDiv = document.createElement('div');
+		setAttributes(volumeSlider, {"TYPE"	: "range",
+									"MIN"	: "0",
+									"MAX"	: "100",
+									"VALUE"	: "100",
+									"CLASS"	: "mevp_volume--slider"});
+		
+		volumeDiv.setAttribute("ID","volume__content");
+		volumeDiv.style.bottom = "45px";
+		volumeDiv.style.left = placeAtRight(volumeLI, volumeDiv);
+		volumeDiv.appendChild(volumeSlider);
+		volumeDiv.style.display = "none";
+		return volumeDiv;
+	}
+	
+	function adjustVolume() {
+		player.volume = (volumeSlider.value / 100);
+	}
+	
+	function setAttributes(element, attributes) {
+		for (let attr in attributes) {
+			element.setAttribute(attr.toUpperCase(), attributes[attr]);
+		}
+		return element;
+	}
 	// implement closed captioning
 
 
@@ -202,16 +275,23 @@ document.addEventListener('DOMContentLoaded', () => {
 	////////////////////////////////////////////////////////////////////////////////
 	
 	skin.addEventListener('click', (e) => {
-		const controlClicked = e.target;
-		if (controlClicked.className	=== 'mevp_fullscreen' || 
-			controlClicked.className	=== 'mevp_normalscreen') {
+		const name = e.target.className;
+		
+		if (name === 'mevp_fullscreen' || 
+			name === 'mevp_normalscreen') {
 			
 			toggleFullScreen();	
-		} else if (controlClicked.className === 'mevp_progress' ||
-				  controlClicked.className === 'mevp_progress--bar') {
+		} else if (name === 'mevp_progress' ||
+				   name === 'mevp_progress--bar') {
 			
 			getProgress(e);
-		} else if (controlClicked.className	!== 'mevp_nav') {
+		} else if (name === 'mevp_volume') {
+			showVolume();
+	
+		} else if (name === 'mevp_volume--slider') {
+			adjustVolume();
+
+		} else if (name	!== 'mevp_nav') {
 			togglePause();
 		}	
 	});
@@ -234,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	window.addEventListener("resize", () => {
 		placeNav();
+		placeVolume();
 	});
 	
 	document.addEventListener("webkitfullscreenchange", () => {
@@ -245,8 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			normalProperties(player);
 			normalProperties(navUL);
 			isFullScreen = false;
-		}
+		}	
 	});
+	
+	volumeSlider.oninput = function() {
+	  adjustVolume();
+	};
 	
 	//////////////////////////////////////////////////////////////////////
 	// Main
