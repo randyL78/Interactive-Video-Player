@@ -15,15 +15,20 @@ document.addEventListener('DOMContentLoaded', function () {
 	const content = document.querySelector('main');
 	const navUL = document.createElement('ul');
 	const volumeSlider = document.createElement('input');
+	const captions = document.querySelectorAll('.captions');
 		// variables, set to defaults
 	let isFullScreen = false;
-	//	let ccMode = 1;				// default showing only one line at a time
+	let theme = "#3fca87"; // default theme color
+	//	let ccMode = 1;				// default showing only one line at a time, use in later functionality
 	content.style.display = 'hidden';
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// functions 
 	////////////////////////////////////////////////////////////////////////////////
 	
+	// ****************** Layout functions *********************************
+	
+	// programatically create the player controls as li elements
 	function createControlsLI(text, type) {	
 		const li = document.createElement('li');
 		li.className = "mevp_" + text;
@@ -73,13 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 	
-	// Place the volume slider over the volume button
-	function placeVolume() {
-		const volumeDiv = volumeSlider.parentElement;
-		const volumeLI = volumeDiv.parentElement;
-		volumeSlider.parentElement.style.left = placeAtRight(volumeLI, "30");
-	}
-
+	
 	// Get top, botom, left or right position of an element
 	function getPosition(element, position) {
 		return (element.getBoundingClientRect()[position]);
@@ -91,6 +90,58 @@ document.addEventListener('DOMContentLoaded', function () {
 		elemHeight = elemHeight.replace("px", "");
 		return(elemHeight);
 	}
+	
+	// set the attributes of an element using an attributes object
+	function setAttributes(element, attributes) {
+		for (let attr in attributes) {
+			element.setAttribute(attr.toUpperCase(), attributes[attr]);
+		}
+		return element;
+	}
+	
+	// ************* Volume controls/ slider functions ***********************************
+	
+	// create volume slider
+	function createVolumeControl() {
+		const volumeLI = document.querySelector('.mevp_volume');
+		const volumeDiv = document.createElement('div');
+		setAttributes(volumeSlider, {"TYPE"	: "range",
+									"MIN"	: "0",
+									"MAX"	: "100",
+									"VALUE"	: "100",
+									"CLASS"	: "mevp_volume--slider"});
+		
+		volumeDiv.setAttribute("ID","volume__content");
+		volumeDiv.style.bottom = "45px";
+		volumeDiv.style.left = placeAtRight(volumeLI, "30");
+		volumeDiv.appendChild(volumeSlider);
+		volumeDiv.style.display = "none";
+		return volumeDiv;
+	}
+	
+	function adjustVolume() {
+		player.volume = (volumeSlider.value / 100);
+	}
+	
+	// Place the volume slider over the volume button
+	function placeVolume() {
+		const volumeDiv = volumeSlider.parentElement;
+		const volumeLI = volumeDiv.parentElement;
+		volumeSlider.parentElement.style.left = placeAtRight(volumeLI, "30");
+	}
+	
+		// Show the volume slider
+	function showVolume() {
+		const volumeDiv = document.querySelector("#volume__content");
+		if (volumeDiv.style.display === "none") {
+			volumeDiv.style.display = "block";
+		} else {
+				volumeDiv.style.display = "none";	
+		}
+	}
+	
+	
+	// ************** player controls functions (other than volume) *******************
 	
 	// Toggle the player to play or pause
 	function togglePause() {
@@ -106,15 +157,45 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 	
-	// Show the volume slider
-	function showVolume() {
-		const volumeDiv = document.querySelector("#volume__content");
-		if (volumeDiv.style.display === "none") {
-			volumeDiv.style.display = "block";
-		} else {
-				volumeDiv.style.display = "none";	
-		}
+		// find out where user clicked in progress bar and use to set video player time
+	function getProgress(e) {
+		const progress = document.querySelector(".mevp_progress");
+		const x = getPosition(progress, "left");
+		const totalWidth = getPosition(progress, "right") - x;
+		const clickWidth = e.clientX - x;
+		setTime((clickWidth / totalWidth) * player.duration);
+	
 	}
+	
+	function updateDuration() {
+		updateTime(".mevp_total", player.duration);
+	}
+	
+	function updateCurrent() {
+		updateTime(".mevp_current", player.currentTime);
+		updateDuration();
+		updateProgress();
+		updateCaptions();
+	}
+	
+		
+	// set the current time of the video player
+	function setTime(time) {
+		player.currentTime = time;
+		if (document.querySelector(".mevp_play")) {
+			togglePause();
+		}
+
+	}
+	
+	// update progress bar width
+	function updateProgress() {
+		const bar = document.querySelector(".mevp_progress--bar");
+		const width = ((player.currentTime / player.duration) * 100) + "%";
+		bar.style.width = width;
+	}
+	
+	// **************** functions for switching to and from fullscreen ******************
 	
 	// set style properties of element when in fullscreen or when going back to normal screen
 	function fullProperties(element) {
@@ -159,45 +240,41 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 	}
-	
-	// set the current time of the video player
-	function setTime(time) {
-		player.currentTime = time;
-		if (document.querySelector(".mevp_play")) {
-			togglePause();
-		}
 
-	}
 	
-	// find out where user clicked in progress bar and use to set video player time
-	function getProgress(e) {
-		const progress = document.querySelector(".mevp_progress");
-		const x = getPosition(progress, "left");
-		const totalWidth = getPosition(progress, "right") - x;
-		const clickWidth = e.clientX - x;
-		setTime((clickWidth / totalWidth) * player.duration);
+	// ****************** Closed captioning ***********************************
+	// later implement loading of a .vtt file for this portion, for now just have in html
 	
-	}
-	
-	function updateDuration() {
-		updateTime(".mevp_total", player.duration);
-	}
-	
-	function updateCurrent() {
-		updateTime(".mevp_current", player.currentTime);
-		updateDuration();
-		updateProgress();
-		updateCaptions();
-	}
-	
+	// highlight captions by changing background color to theme color
 	function updateCaptions() {
 		const time = player.currentTime;
-		let tempTime = "00:00:00.240";
-		stringTimeToNumber(tempTime); 
+		for (let caption of captions) {
+			const start = stringTimeToNumber(caption.getAttribute('data-startTime'));
+			const end = stringTimeToNumber(caption.getAttribute('data-endTime'));
+			if (time > start && time <= end) {
+				caption.style.backgroundColor = theme;
+				caption.style.color = "#fff";
+			} else {
+				caption.style.backgroundColor = "#fff";
+				caption.style.color = "#111";
+			}
+		}
 	}
 	
+	// convert times in captions to numbers
 	function stringTimeToNumber(timeString) {
-		
+		const times = timeString.split(":");
+		let sec = parseFloat(times[2]);
+		let min = 0;
+		let hour = 0;
+		if (times.length >= 2) {
+			min = parseFloat(times[1]);
+			if (times.length >= 3) {
+				hour = parseFloat(times[0]);
+			}
+		}
+		return (((hour * 60) + min) * 60) + sec;	
+	
 	}
 	
 	function updateTime(elementName, getTime) {
@@ -224,11 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		return timeString;
 	}
 	
-	function updateProgress() {
-		const bar = document.querySelector(".mevp_progress--bar");
-		const width = ((player.currentTime / player.duration) * 100) + "%";
-		bar.style.width = width;
-	}
+
 	
 	///////////////////////////////////////////
 	//	 Initial setup and loading of player
@@ -268,36 +341,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		
 		const volumeUL = document.querySelector('.mevp_volume--drop');
 		volumeUL.appendChild(createVolumeControl());
-	}
+	} // end load player
 	
-	function createVolumeControl() {
-		const volumeLI = document.querySelector('.mevp_volume');
-		const volumeDiv = document.createElement('div');
-		setAttributes(volumeSlider, {"TYPE"	: "range",
-									"MIN"	: "0",
-									"MAX"	: "100",
-									"VALUE"	: "100",
-									"CLASS"	: "mevp_volume--slider"});
-		
-		volumeDiv.setAttribute("ID","volume__content");
-		volumeDiv.style.bottom = "45px";
-		volumeDiv.style.left = placeAtRight(volumeLI, "30");
-		volumeDiv.appendChild(volumeSlider);
-		volumeDiv.style.display = "none";
-		return volumeDiv;
-	}
+
+
 	
-	function adjustVolume() {
-		player.volume = (volumeSlider.value / 100);
-	}
-	
-	function setAttributes(element, attributes) {
-		for (let attr in attributes) {
-			element.setAttribute(attr.toUpperCase(), attributes[attr]);
-		}
-		return element;
-	}
-	// implement closed captioning
 
 
 
@@ -336,6 +384,15 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 	
+	player.addEventListener("canplay", function () {
+		placeNav();
+		updateDuration();
+	});
+	
+	player.onended = function() {
+		togglePause();
+	};
+	
 	player.addEventListener("timeupdate", function () {
 		updateCurrent();
 	});
@@ -350,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		placeVolume();
 	});
 	
+	
 	document.addEventListener("webkitfullscreenchange", function () {
 		if (isFullScreen === false) {
 			isFullScreen = true;
@@ -362,13 +420,22 @@ document.addEventListener('DOMContentLoaded', function () {
 		}	
 	});
 	
+
+	
 	volumeSlider.oninput = function() {
 	  adjustVolume();
 	};
 	
+	for (let caption of captions) {
+		caption.addEventListener('click', function () {		
+			const selectTime = stringTimeToNumber(caption.getAttribute("data-startTime"));
+			setTime(selectTime);
+		});
+	}
 	//////////////////////////////////////////////////////////////////////
 	// Main
 	//////////////////////////////////////////////////////////////////////
+	
 	loadPlayer();
 	
 });
