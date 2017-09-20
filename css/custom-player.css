@@ -3,7 +3,7 @@
 .mevp_skin {
 	display: block;
 	width: 100%;
-	max-width: 1100px;
+	max-width: 700px;
 }
 
 .custom_player {
@@ -21,7 +21,7 @@
 	position: absolute;
 	z-index: 100;
 	padding: 10px;
-	max-width: 1100px;
+	max-width: 700px;
 	box-shadow: 0 0 44px 5px rgba(180, 180, 180, .4) inset;
 
 }
@@ -63,7 +63,7 @@
 .mevp_progress--bar {
 	height: 100%;
 	width: 0%;
-	background-color:rgba(255,255,255, 0.9);
+	background-color:rgba(63,202,135, 0.9);
 }
 
 .mevp_volume--slider {
@@ -86,7 +86,7 @@
     width: 15px;
     height: 15px;
     border-radius: 50%; 
- 	background-color:rgba(255,255,255, 0.9);
+ 	background-color:rgba(63,202,135, 0.9);
 	box-shadow: -1px 1px 1px 0 #000;
     cursor: pointer;
 }
@@ -95,11 +95,19 @@
 	width: 15px;
     height: 15px;
     border-radius: 50%; 
- 	background-color:rgba(255,255,255, 0.9);
+ 	background-color:rgba(63,202,135, 0.9);
 	box-shadow: -1px 1px 1px 0 #000;
     cursor: pointer;
 }
 
+.mevp_volume--slider::-ms-thumb {
+	width: 15px;
+    height: 15px;
+    border-radius: 50%; 
+ 	background-color:rgba(63,202,135, 0.9);
+	box-shadow: -1px 1px 1px 0 #000;
+    cursor: pointer;
+}
 
 
 .mevp_fullscreen {
@@ -124,10 +132,10 @@
 
 .mevp_nav p {
 	display: inline-block;
-	color: #fff;
+	color: #3fca87;
 	margin: 0;
-	padding-top: 5px;
 	text-shadow: 1px 1px 3px #000;
+	
 }
 
 .mevp_skin:-webkit-full-screen, 
@@ -161,7 +169,7 @@
 	.custom_player {
 		box-shadow: 0 0 10px 13px #aab;
 		border: 3px solid #333;
-		max-width: 1100px;
+		max-width: 700px;
 	}
 }
 

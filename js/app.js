@@ -5,19 +5,20 @@
 //				by: Randy Layne
 //	================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
 	"use strict";
 	//	global variables
 		// constants
 	const skin = document.createElement('div');
 	const player = document.querySelector('.custom_player');
 	const container = player.parentNode;
+	const content = document.querySelector('main');
 	const navUL = document.createElement('ul');
 	const volumeSlider = document.createElement('input');
 		// variables, set to defaults
 	let isFullScreen = false;
 	//	let ccMode = 1;				// default showing only one line at a time
-	
+	content.style.display = 'hidden';
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// functions 
@@ -51,27 +52,32 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Calculate the difference between the heights of 2 elements so that one can float at the bottom of the other
 	function placeAtBottom(baseElement, topElement) {
 		const baseHeight = getPosition(baseElement, "bottom");
-		const topHeight = getHeight(topElement);
+		const topHeight = getDimension(topElement, "height");
 		const computeHeight = (baseHeight - topHeight) + "px";
-		
+	
 		return computeHeight;
 	}
 	
-	function placeAtRight(baseElement, topElement) {
+	// Get the coordinates to place one element at the right hand side of another element (buggy)
+	function placeAtRight(baseElement, topWidth) {
 		const baseWidth = getPosition(baseElement, "right");
-		const topWidth = "30";
 		const parentWidth = getPosition(skin, "left");
 		return (baseWidth - topWidth - parentWidth) + "px";
 	}
 	
+	// Place the player controls at bottom of video
 	function placeNav() {
 		navUL.style.top = placeAtBottom(player, navUL);
+		if (isFullScreen === false) {
+			content.style.marginTop = getDimension(player, 'height') + "px";
+		}
 	}
 	
+	// Place the volume slider over the volume button
 	function placeVolume() {
 		const volumeDiv = volumeSlider.parentElement;
 		const volumeLI = volumeDiv.parentElement;
-		volumeSlider.parentElement.style.left = placeAtRight(volumeLI, volumeDiv);
+		volumeSlider.parentElement.style.left = placeAtRight(volumeLI, "30");
 	}
 
 	// Get top, botom, left or right position of an element
@@ -79,12 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		return (element.getBoundingClientRect()[position]);
 	}
 	
-	function getHeight(element, dimension = "height") {
+	// Get height or width of an element as a number
+	function getDimension(element, dimension) {
 		let elemHeight = window.getComputedStyle(element).getPropertyValue(dimension);
 		elemHeight = elemHeight.replace("px", "");
 		return(elemHeight);
 	}
 	
+	// Toggle the player to play or pause
 	function togglePause() {
 		if (document.querySelector(".mevp_play")) {
 			const play = document.querySelector(".mevp_play");
@@ -98,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 	
+	// Show the volume slider
 	function showVolume() {
 		const volumeDiv = document.querySelector("#volume__content");
 		if (volumeDiv.style.display === "none") {
@@ -113,8 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		element.style.Width = "100%";
 	}
 	
+	// eventually will set any element to its pre fullscreen styles, currently it is project specific
 	function normalProperties(element) {
-		element.style.maxWidth = "1100px";
+		element.style.maxWidth = "700px";
 		element.style.Width = "100%";
 	}
 	
@@ -147,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			} else if (document.webkitExitFullscreen) {
 			  document.webkitExitFullscreen();
 			}
-					}
+		}
 	}
 	
 	// set the current time of the video player
@@ -177,6 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		updateTime(".mevp_current", player.currentTime);
 		updateDuration();
 		updateProgress();
+		updateCaptions();
+	}
+	
+	function updateCaptions() {
+		const time = player.currentTime;
+		let tempTime = "00:00:00.240";
+		stringTimeToNumber(tempTime); 
+	}
+	
+	function stringTimeToNumber(timeString) {
+		
 	}
 	
 	function updateTime(elementName, getTime) {
@@ -186,13 +207,21 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 	
 	function timeToString(time) {
-		const min = parseInt(time / 60);
+		let timeString = "";
+		let min = parseInt(time / 60);
+		const hour = parseInt(min);
+		min = parseInt(min % 60);
 		const sec = parseInt(time % 60);
-		if (sec < 10) {
-			return min + ":0" + sec;
-		} else {
-			return min + ":" + sec;	
+		if (hour > 0) {
+			timeString += hour + ":";
 		}
+		timeString += min + ":";
+		if (sec < 10) {
+			timeString += "0" + sec;
+		} else {
+			timeString += sec;	
+		}
+		return timeString;
 	}
 	
 	function updateProgress() {
@@ -214,7 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// hide browser player controls
 		player.removeAttribute("controls");
-
+		
+		// keep browser from loading subtitles by default
+		for (let i = 0; i < player.textTracks.length; i++) {
+			player.textTracks[i].mode = 'hidden';
+		}
 		
 		// add custom controls to container
 		const navLI = {
@@ -248,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		volumeDiv.setAttribute("ID","volume__content");
 		volumeDiv.style.bottom = "45px";
-		volumeDiv.style.left = placeAtRight(volumeLI, volumeDiv);
+		volumeDiv.style.left = placeAtRight(volumeLI, "30");
 		volumeDiv.appendChild(volumeSlider);
 		volumeDiv.style.display = "none";
 		return volumeDiv;
@@ -274,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	// event handlers
 	////////////////////////////////////////////////////////////////////////////////
 	
-	skin.addEventListener('click', (e) => {
+	skin.addEventListener('click', function (e) {
 		const name = e.target.className;
 		
 		if (name === 'mevp_fullscreen' || 
@@ -297,27 +330,27 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 	
 	// keep users from right clicking and showing browser controls
-	skin.addEventListener('contextmenu', (e) => {
+	skin.addEventListener('contextmenu', function (e) {
 		if (e.target.className	=== 'custom_player') {
 			e.preventDefault();
 		}
 	});
 	
-	player.addEventListener("timeupdate", () => {
+	player.addEventListener("timeupdate", function () {
 		updateCurrent();
 	});
 	
-	player.addEventListener("resize", () => {
+	player.addEventListener("resize", function () {
 		placeNav();
 		updateDuration();
 	});
 	
-	window.addEventListener("resize", () => {
+	window.addEventListener("resize", function () {
 		placeNav();
 		placeVolume();
 	});
 	
-	document.addEventListener("webkitfullscreenchange", () => {
+	document.addEventListener("webkitfullscreenchange", function () {
 		if (isFullScreen === false) {
 			isFullScreen = true;
 		} else {
@@ -336,7 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	//////////////////////////////////////////////////////////////////////
 	// Main
 	//////////////////////////////////////////////////////////////////////
-	
 	loadPlayer();
 	
 });
