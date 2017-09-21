@@ -95,7 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	// set the attributes of an element using an attributes object
 	function setAttributes(element, attributes) {
 		for (let attr in attributes) {
-			element.setAttribute(attr.toUpperCase(), attributes[attr]);
+			if (attr !== "") {
+				element.setAttribute(attr.toUpperCase(), attributes[attr]);
+			}
 		}
 		return element;
 	}
@@ -138,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (volumeDiv.style.display === "none") {
 			volumeDiv.style.display = "block";
 		} else {
-				volumeDiv.style.display = "none";	
+			volumeDiv.style.display = "none";	
 		}
 	}
 	
@@ -335,7 +337,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		};
 		
 		for (let text in navLI) {
-			navUL.appendChild(createControlsLI(text, navLI[text]));
+			if (text !== "") {
+				navUL.appendChild(createControlsLI(text, navLI[text]));
+			}
 		}
 		// TODO: add player controls .svgs inline with javascript so colors can be manipulated
 		
