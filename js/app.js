@@ -124,6 +124,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	function adjustVolume() {
 		player.volume = (volumeSlider.value / 100);
+		const volumeButton = document.querySelector(".mevp_volume");
+		if (player.volume === 0 && !volumeButton.hasAttribute("ID")) {
+			volumeButton.setAttribute("ID", "mevp_mute");
+		} else if (player.volume !== 0 && volumeButton.hasAttribute("ID")) {
+			volumeButton.removeAttribute("ID");
+		}
 		
 	}
 	

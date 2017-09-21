@@ -121,6 +121,10 @@
 	background: url(../images/volume.svg) center no-repeat;
 }
 
+#mevp_mute {
+	background: url(../images/mute.svg) center no-repeat;
+}
+
 #volume__content {
 	position: absolute;
 	height: 100px;
