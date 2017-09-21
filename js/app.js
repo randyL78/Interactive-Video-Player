@@ -58,7 +58,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	function placeAtBottom(baseElement, topElement) {
 		const baseHeight = getPosition(baseElement, "bottom");
 		const topHeight = getDimension(topElement, "height");
-		const computeHeight = (baseHeight - topHeight) + "px";
+		const scrollOffset = window.scrollY;
+		const computeHeight = (baseHeight - topHeight + scrollOffset) + "px";
 	
 		return computeHeight;
 	}
@@ -121,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	function adjustVolume() {
 		player.volume = (volumeSlider.value / 100);
+		
 	}
 	
 	// Place the volume slider over the volume button
@@ -251,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (let caption of captions) {
 			const start = stringTimeToNumber(caption.getAttribute('data-startTime'));
 			const end = stringTimeToNumber(caption.getAttribute('data-endTime'));
-			if (time > start && time <= end) {
+			if (time >= start && time < end) {
 				caption.style.backgroundColor = theme;
 				caption.style.color = "#fff";
 			} else {
@@ -335,6 +337,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (let text in navLI) {
 			navUL.appendChild(createControlsLI(text, navLI[text]));
 		}
+		// TODO: add player controls .svgs inline with javascript so colors can be manipulated
+		
 		navUL.className = "mevp_nav";
 		skin.appendChild(navUL);
 		navUL.style.top = placeAtBottom(player, navUL);
@@ -344,12 +348,14 @@ document.addEventListener('DOMContentLoaded', function () {
 	} // end load player
 	
 
-
-	
-
-
-
 	// allow users to change control colors
+	
+		//TODO: Add a settings button
+			//TODO: Have setting button pull up a colorpicker to select skin color
+			// set skin box-shadow color to color picker value
+			//TODO: Have setting button pull up a colorpicker to select theme color
+			// set svg fill properties to color picker value
+			// set  .mevp_nav p color properties to color picker
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// event handlers
@@ -407,8 +413,19 @@ document.addEventListener('DOMContentLoaded', function () {
 		placeVolume();
 	});
 	
-	
 	document.addEventListener("webkitfullscreenchange", function () {
+		changeFullscreen();
+	});
+	
+	document.addEventListener("mozfullscreenchange", function () {
+		changeFullscreen();
+	});
+		
+	document.addEventListener("fullscreenchange", function () {
+		changeFullscreen();
+	});
+
+	function changeFullscreen() {
 		if (isFullScreen === false) {
 			isFullScreen = true;
 		} else {
@@ -418,8 +435,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			normalProperties(navUL);
 			isFullScreen = false;
 		}	
-	});
-	
+		placeNav();
+	}
 
 	
 	volumeSlider.oninput = function() {

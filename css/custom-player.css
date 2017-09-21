@@ -82,7 +82,7 @@
 
 .mevp_volume--slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    appearance: none;
+/*    appearance: none;*/
     width: 15px;
     height: 15px;
     border-radius: 50%; 
