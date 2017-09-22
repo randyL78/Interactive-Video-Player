@@ -16,9 +16,19 @@ document.addEventListener('DOMContentLoaded', function () {
 	const navUL = document.createElement('ul');
 	const volumeSlider = document.createElement('input');
 	const captions = document.querySelectorAll('.captions');
+	const main = document.querySelector('main');
+		// modal elements
+	const modal = document.createElement('div');	
+	const settings = document.createElement('ul');	
+	const closeButton = document.createElement("button");
 		// variables, set to defaults
 	let isFullScreen = false;
-	let theme = "#3fca87"; // default theme color
+	let isIE = false;
+	let theme = "rgb(63,202,135)"; // default theme color
+	let themeText = "fff"; // default theme color
+	let url = window.location.pathname; // get root directory
+	url = url.slice(0, url.lastIndexOf("/") + 1);
+
 	//	let ccMode = 1;				// default showing only one line at a time, use in later functionality
 	content.style.display = 'hidden';
 	
@@ -58,9 +68,15 @@ document.addEventListener('DOMContentLoaded', function () {
 	function placeAtBottom(baseElement, topElement) {
 		const baseHeight = getPosition(baseElement, "bottom");
 		const topHeight = getDimension(topElement, "height");
-		const scrollOffset = window.scrollY;
-		const computeHeight = (baseHeight - topHeight + scrollOffset) + "px";
-	
+		let scrollOffset = window.scrollY;
+		let iEoffSet = 0;
+		// IE workaround
+		if (isIE) {
+			scrollOffset = window.pageYOffset;
+			iEoffSet = -15;
+		}
+		const computeHeight = (baseHeight - topHeight + scrollOffset + iEoffSet) + "px";
+//		console.log(baseHeight + ", " + topHeight + ", " + scrollOffset);
 		return computeHeight;
 	}
 	
@@ -210,13 +226,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	// set style properties of element when in fullscreen or when going back to normal screen
 	function fullProperties(element) {
 		element.style.maxWidth = "100%";
-		element.style.Width = "100%";
+		element.style.width = "100%";
 	}
 	
 	// eventually will set any element to its pre fullscreen styles, currently it is project specific
 	function normalProperties(element) {
 		element.style.maxWidth = "700px";
-		element.style.Width = "100%";
+		element.style.width = "100%";
 	}
 	
 	// handle full screen mode	
@@ -251,19 +267,42 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+	function changeFullscreen() {
+		if (isFullScreen === false) {
+			isFullScreen = true;
+		} else {
+			const fullButton = document.querySelector(".mevp_normalscreen");
+			fullButton.className = "mevp_fullscreen";
+			normalProperties(player);
+			normalProperties(navUL);
+			isFullScreen = false;
+		}	
+		placeNav();
+	}
+	
+	function changeFullscreenIE() {
+		changeFullscreen();
+		// manually set full screen width and height properties for IE
+		if (isFullScreen === true) {
+				skin.style.maxWidth = "100%";
+				skin.style.height = "100%";
+		} 
+	}
 	
 	// ****************** Closed captioning ***********************************
 	// later implement loading of a .vtt file for this portion, for now just have in html
 	
 	// highlight captions by changing background color to theme color
+		// changed for .. of loop to traditional for loop for better compatibility with IE 11-
 	function updateCaptions() {
 		const time = player.currentTime;
-		for (let caption of captions) {
+		for (let i = 0;  i < captions.length; i++) {
+			const caption = captions[i];
 			const start = stringTimeToNumber(caption.getAttribute('data-startTime'));
 			const end = stringTimeToNumber(caption.getAttribute('data-endTime'));
 			if (time >= start && time < end) {
 				caption.style.backgroundColor = theme;
-				caption.style.color = "#fff";
+				caption.style.color = themeText;
 			} else {
 				caption.style.backgroundColor = "#fff";
 				caption.style.color = "#111";
@@ -311,7 +350,35 @@ document.addEventListener('DOMContentLoaded', function () {
 		return timeString;
 	}
 	
-
+// ****************** modal functions **********
+	function createRGB(name) {
+		const slide = document.createElement("input");
+		setAttributes(slide, {"TYPE"	: "range",
+							"MIN"	: "0",
+							"MAX"	: "255",
+							"VALUE"	: "100",
+							"CLASS"	: "mevp--slider",
+							 "ID" 	: name});
+		return slide;
+	}
+	
+	// allow users to change control colors
+	function changeTheme() {
+		const sliders = document.querySelectorAll(".mevp--slider");
+		let r = parseInt(sliders[0].value);
+		let g = parseInt(sliders[1].value);
+		let b = parseInt(sliders[2].value);
+		theme = "rgb(" + r + ", " + g + ", " + b + ")";
+		if (((r + g + b)/3) > 125) {
+			themeText = "#111";
+		} else {
+			themeText = "#fff";
+		}
+		let prog = document.querySelector(".mevp_progress--bar");
+		prog.style.backgroundColor = theme;//"rgb(" + r + ", " + g + ", " + b + "0.9)";
+		player.style.boxShadow = "0 0 10px 13px " + theme;
+		updateCaptions();
+	}
 	
 	///////////////////////////////////////////
 	//	 Initial setup and loading of player
@@ -334,6 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		
 		// add custom controls to container
 		const navLI = {
+			settings	:	"link",
 			play		:	"link",
 			current		:	"time",
 			progress	:	"progress",
@@ -353,19 +421,30 @@ document.addEventListener('DOMContentLoaded', function () {
 		skin.appendChild(navUL);
 		navUL.style.top = placeAtBottom(player, navUL);
 		
+		if (window.scrollY === undefined) {
+			isIE = true;
+		}
+		
 		const volumeUL = document.querySelector('.mevp_volume--drop');
 		volumeUL.appendChild(createVolumeControl());
+		
+		// Create modal for color picker
+		closeButton.textContent = "Close";
+		closeButton.className = "mevp_close";
+		settings.appendChild(createRGB("red"));		
+		settings.appendChild(createRGB("green"));		
+		settings.appendChild(createRGB("blue"));		
+		settings.className = "mevp_settingsUL";
+		modal.appendChild(settings);
+		modal.appendChild(closeButton);
+		modal.className = "mevp_modal";
+		container.appendChild(modal);
+		
+		
 	} // end load player
 	
 
-	// allow users to change control colors
-	
-		//TODO: Add a settings button
-			//TODO: Have setting button pull up a colorpicker to select skin color
-			// set skin box-shadow color to color picker value
-			//TODO: Have setting button pull up a colorpicker to select theme color
-			// set svg fill properties to color picker value
-			// set  .mevp_nav p color properties to color picker
+
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// event handlers
@@ -387,7 +466,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 		} else if (name === 'mevp_volume--slider') {
 			adjustVolume();
-
+		
+		} else if (name === 'mevp_settings') {
+			modal.style.display = "block";
+			
 		} else if (name	!== 'mevp_nav') {
 			togglePause();
 		}	
@@ -434,31 +516,42 @@ document.addEventListener('DOMContentLoaded', function () {
 	document.addEventListener("fullscreenchange", function () {
 		changeFullscreen();
 	});
-
-	function changeFullscreen() {
-		if (isFullScreen === false) {
-			isFullScreen = true;
-		} else {
-			const fullButton = document.querySelector(".mevp_normalscreen");
-			fullButton.className = "mevp_fullscreen";
-			normalProperties(player);
-			normalProperties(navUL);
-			isFullScreen = false;
-		}	
-		placeNav();
-	}
-
 	
+	document.addEventListener("MSFullscreenChange", function () {
+		changeFullscreenIE();
+	});
+
+
 	volumeSlider.oninput = function() {
 	  adjustVolume();
 	};
 	
-	for (let caption of captions) {
-		caption.addEventListener('click', function () {		
-			const selectTime = stringTimeToNumber(caption.getAttribute("data-startTime"));
-			setTime(selectTime);
-		});
-	}
+	// let click on captions bubble up to main tag for better compatibility with Edge and IE
+	main.addEventListener('click', function (e) {
+		if (e.target.className === 'captions') {
+			const selectTime = stringTimeToNumber(e.target.getAttribute("data-startTime"));
+			setTime(selectTime);		}
+	});
+	
+	// removed for incompatibility with Edge and IE
+//	for (let caption of captions) {
+//		caption.addEventListener('click', function () {		
+//			const selectTime = stringTimeToNumber(caption.getAttribute("data-startTime"));
+//			setTime(selectTime);
+//		});
+//	}
+	
+	settings.addEventListener('change', function (e) {
+		const slide = e.target;
+		if (slide.className === "mevp--slider") {
+			changeTheme();
+		}
+	});
+	
+	closeButton.addEventListener('click', function () {
+		modal.style.display = "none";
+	});
+	
 	//////////////////////////////////////////////////////////////////////
 	// Main
 	//////////////////////////////////////////////////////////////////////

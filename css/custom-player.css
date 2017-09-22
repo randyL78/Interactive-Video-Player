@@ -4,6 +4,7 @@
 	display: block;
 	width: 100%;
 	max-width: 700px;
+	background-image: url(../images/wait.svg);
 }
 
 .custom_player {
@@ -46,6 +47,10 @@
 	width: 1px;
 }
 
+.mevp_settings {
+	background: url(../images/settings.svg) center no-repeat;
+}
+
 .mevp_pause {
 	background: url(../images/pause.svg) center no-repeat;
 }
@@ -63,7 +68,8 @@
 .mevp_progress--bar {
 	height: 100%;
 	width: 0%;
-	background-color:rgba(63,202,135, 0.9);
+	background-color:rgb(63,202,135);
+	opacity: 0.9;
 }
 
 .mevp_volume--slider {
@@ -151,6 +157,35 @@
 
 .mevp_skin:-webkit-full-screen {
 	height: 100%;
+}
+
+.mevp_modal {
+	display: none;
+	background-color: #fff;
+	border: 3px solid #1C6242;
+	height: 200px;
+	width: 400px;
+	max-width: 95%;
+	max-height: 95%;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 1000;
+	
+}
+
+.mevp_settingsUL {
+	display: flex;
+	flex-direction: column;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.mevp_close {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 @media (min-width: 480px) {
